@@ -1,89 +1,78 @@
-'use strict'
-
-class SQLStatement {
-  /**
-   * @param {string[]} strings
-   * @param {any[]} values
-   */
-  constructor(strings, values) {
-    this.strings = strings
-    this.values = values
-  }
-
-  /** Returns the SQL Statement for Sequelize */
-  get query() {
-    return this.bind ? this.text : this.sql
-  }
-
-  /** Returns the SQL Statement for node-postgres */
-  get text() {
-    return this.strings.reduce((prev, curr, i) => prev + '$' + i + curr)
-  }
-
-  /**
-   * @param {SQLStatement|string} statement
-   * @returns {this}
-   */
-  append(statement) {
-    if (statement instanceof SQLStatement) {
-      this.strings[this.strings.length - 1] += statement.strings[0]
-      this.strings.push.apply(this.strings, statement.strings.slice(1))
-      const list = this.values || this.bind
-      list.push.apply(list, statement.values)
+function _class_call_check(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+        throw new TypeError("Cannot call a class as a function");
+    }
+}
+function _defineProperties(target, props) {
+    for(var i = 0; i < props.length; i++){
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+    }
+}
+function _create_class(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
+    return Constructor;
+}
+function _define_property(obj, key, value) {
+    if (key in obj) {
+        Object.defineProperty(obj, key, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
     } else {
-      this.strings[this.strings.length - 1] += statement
+        obj[key] = value;
     }
-    return this
-  }
-
-  /**
-   * Use a prepared statement with Sequelize.
-   * Makes `query` return a query with `$n` syntax instead of `?`  and switches the `values` key name to `bind`
-   * @param {boolean} [value=true] value If omitted, defaults to `true`
-   * @returns this
-   */
-  useBind(value) {
-    if (value === undefined) {
-      value = true
-    }
-    if (value && !this.bind) {
-      this.bind = this.values
-      delete this.values
-    } else if (!value && this.bind) {
-      this.values = this.bind
-      delete this.bind
-    }
-    return this
-  }
-
-  /**
-   * @param {string} name
-   * @returns {this}
-   */
-  setName(name) {
-    this.name = name
-    return this
-  }
+    return obj;
 }
-
-/** Returns the SQL Statement for mysql */
-Object.defineProperty(SQLStatement.prototype, 'sql', {
-  enumerable: true,
-  get() {
-    return this.strings.join('?')
-  },
-})
-
-/**
- * @param {string[]} strings
- * @param {...any} values
- * @returns {SQLStatement}
- */
-function SQL(strings) {
-  return new SQLStatement(strings.slice(0), Array.from(arguments).slice(1))
+function _instanceof(left, right) {
+    if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) {
+        return !!right[Symbol.hasInstance](left);
+    } else {
+        return left instanceof right;
+    }
 }
+export var SQLStatement = /*#__PURE__*/ function() {
+    "use strict";
+    function SQLStatement(strings, values) {
+        _class_call_check(this, SQLStatement);
+        _define_property(this, "strings", void 0);
+        _define_property(this, "values", void 0);
+        this.strings = strings;
+        this.values = values;
+    }
+    _create_class(SQLStatement, [
+        {
+            key: "sql",
+            get: function get() {
+                return this.strings.join('?').replace(/\s+/g, ' ').trim();
+            }
+        },
+        {
+            key: "append",
+            value: function append(statement) {
+                if (_instanceof(statement, SQLStatement)) {
+                    this.strings[this.strings.length - 1] += ' ' + statement.sql;
+                    this.values.push.apply(this.values, statement.values);
+                } else {
+                    this.strings[this.strings.length - 1] += ' ' + statement;
+                }
+                return this;
+            }
+        }
+    ]);
+    return SQLStatement;
+}();
+export var SQL = function(strings) {
+    for(var _len = arguments.length, values = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++){
+        values[_key - 1] = arguments[_key];
+    }
+    return new SQLStatement(strings.slice(0), values);
+};
+export default SQL;
 
-module.exports = SQL
-module.exports.SQL = SQL
-module.exports.default = SQL
-module.exports.SQLStatement = SQLStatement
